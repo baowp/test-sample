@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.iteye.baowp.domain.persistence.BookMapper">
+
+	<cache />
+
+	<insert id="insert" parameterType="BookEntity">
+		<selectKey resultType="Long" order="AFTER" keyProperty="id">  
+			select last_insert_id() as id  
+		</selectKey>
+		insert into book (
+			title,
+            price
+		) values (
+			#{title},
+			#{price}
+		)
+	</insert>
+	
+	<sql id="selectColumns">
+		select id,
+				title,
+				price
+		from book
+	</sql>
+	
+	<select id="list" resultType="BookEntity">
+		<include refid="selectColumns"/>
+	</select>
+
+    <update id="update" parameterType="BookEntity">
+        update book set title=#{title},price=#{price} where id=#{id}
+    </update>
+
+</mapper>

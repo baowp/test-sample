@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="configProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="locations">
+            <list>
+                <value>classpath:*.properties</value>
+            </list>
+        </property>
+    </bean>
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">
+        <property name="properties" ref="configProperties"/>
+    </bean>
+
+    
+    <!-- jedis pool配置 -->
+    <bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <property name="maxTotal" value="${redis.jedisPoolConfig.maxTotal:200}" />
+        <property name="maxIdle" value="${redis.jedisPoolConfig.maxIdle:100}" />
+        <property name="maxWaitMillis" value="${redis.jedisPoolConfig.maxWaitMillis:10000}" />
+        <property name="testOnBorrow" value="${redis.jedisPoolConfig.testOnBorrow:true}" />
+    </bean>
+
+    <!-- spring data redis -->
+    <bean id="jedisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+        <property name="usePool" value="${redis.jedisConnectionFactory.userPool:true}"></property>
+        <property name="hostName" value="${redis.jedisConnectionFactory.hostName:localhost}" />
+        <property name="port" value="${redis.jedisConnectionFactory.port:6379}" />
+        <property name="database" value="${redis.jedisConnectionFactory.database:0}" />
+        <property name="timeout" value="${redis.jedisConnectionFactory.timeout:2000}" />
+        <constructor-arg index="0" ref="jedisPoolConfig" />
+    </bean>
+
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+        <property name="connectionFactory" ref="jedisConnectionFactory" />
+    </bean>
+
+</beans>
