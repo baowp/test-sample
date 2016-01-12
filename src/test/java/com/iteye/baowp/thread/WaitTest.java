@@ -17,8 +17,11 @@ public class WaitTest {
         synchronized (calculator) {
             logger.info("run into synchronized block");
             try {
-                while (!calculator.calculated)
-                calculator.wait();
+                while (!calculator.calculated) {
+                    logger.info("Begin to wait");
+                    calculator.wait();
+                    logger.info("Current waiting is finished");
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -29,7 +32,7 @@ public class WaitTest {
 
     class Calculator extends Thread {
         int total;
-        boolean calculated;
+         boolean calculated;
         public void run() {
             try {
                 Thread.sleep(5L);
@@ -40,8 +43,10 @@ public class WaitTest {
                 total += i;
             }
             logger.info("total is {}", total);
+            synchronized (this) {
+                notify();
+            }
             calculated=true;
-            //notify();
         }
     }
 }
