@@ -2,16 +2,18 @@ package com.iteye.baowp.utils.rsa;
 
 import org.apache.commons.io.IOUtils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.security.cert.Certificate;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -22,7 +24,7 @@ import javax.crypto.NoSuchPaddingException;
  * Created by Administrator on 2016/6/7.
  */
 public class RSAPublicTool {
-
+    private static final Logger logger = LoggerFactory.getLogger(RSAPublicTool.class);
     private static final String publicKeyName="publicKey.keystore";
 
     public static String getPublicKey() throws IOException {
@@ -47,6 +49,31 @@ public class RSAPublicTool {
             throw new Exception("公钥非法");
         } catch (NullPointerException e) {
             throw new Exception("公钥数据为空");
+        }
+    }
+
+    public static PublicKey loadPublicKeyFromJks(InputStream is,  String kstorepwd, String alias){
+        try {
+            KeyStore ks;
+            // try (FileInputStream in = new FileInputStream(kstorefile)) {
+            ks = KeyStore.getInstance("jks");
+            ks.load(is, kstorepwd.toCharArray());
+            //}
+            if (!ks.containsAlias(alias)) {
+                logger.info("No such alias in the keystore.");
+                return null;
+            }
+            Certificate cert = ks.getCertificate(alias);
+            return cert.getPublicKey();
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException ex) {
+            logger.info("getPublicKey failure.");
+            return null;
+        } catch (FileNotFoundException ex) {
+            logger.info("getPublicKey failure.");
+            return null;
+        } catch (IOException ex) {
+            logger.info("getPublicKey failure.");
+            return null;
         }
     }
 
@@ -145,6 +172,28 @@ public class RSAPublicTool {
                     .getInstance(SIGN_ALGORITHMS);
 
             signature.initVerify(pubKey);
+            signature.update( content.getBytes() );
+
+            boolean bverify = signature.verify( Base64.decodeBase64(sign) );
+            return bverify;
+
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public static boolean doCheck(String content, String sign, PublicKey publicKey)
+    {
+        try
+        {
+            java.security.Signature signature = java.security.Signature
+                    .getInstance(SIGN_ALGORITHMS);
+
+            signature.initVerify(publicKey);
             signature.update( content.getBytes() );
 
             boolean bverify = signature.verify( Base64.decodeBase64(sign) );

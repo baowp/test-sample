@@ -2,17 +2,18 @@ package com.iteye.baowp.utils.rsa;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -21,7 +22,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
  * Created by Administrator on 2016/6/7.
  */
 public class RSAPrivateTool {
-
+    private static final Logger logger = LoggerFactory.getLogger(RSAPrivateTool.class);
     private static final String privateKeyName = "privateKey.keystore";
 
     public static String getPrivateKey() throws IOException {
@@ -45,7 +46,30 @@ public class RSAPrivateTool {
         } catch (NullPointerException e) {
             throw new Exception("私钥数据为空");
         }
+    }
 
+    public static PrivateKey loadPrivateKeyFromJks(InputStream is, String kstorepwd, String alias, String keypwd){
+        try {
+            KeyStore ks;
+            //  try (FileInputStream in = new FileInputStream(kstorefile)) {
+            ks = KeyStore.getInstance("jks");
+            ks.load(is, kstorepwd.toCharArray());
+            //}
+            if (!ks.containsAlias(alias)) {
+                logger.info("No such alias in the keystore.");
+                return null;
+            }
+            return (PrivateKey) ks.getKey(alias, keypwd.toCharArray());
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException ex) {
+            logger.info("getPrivateKey failure");
+            return null;
+        } catch (FileNotFoundException ex) {
+            logger.info("getPrivateKey failure.");
+            return null;
+        } catch (IOException ex) {
+            logger.info("getPrivateKey failure.");
+            return null;
+        }
     }
 
     public static byte[] encrypt(RSAPrivateKey privateKey, byte[] plainTextData)
@@ -140,6 +164,19 @@ public class RSAPrivateTool {
             PrivateKey priKey = keyf.generatePrivate(priPKCS8);
             java.security.Signature signature = java.security.Signature.getInstance(SIGN_ALGORITHMS);
             signature.initSign(priKey);
+            signature.update(content.getBytes());
+            byte[] signed = signature.sign();
+            return Base64.encodeBase64String(signed);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String sign(String content, PrivateKey privateKey) {
+        try {
+            java.security.Signature signature = java.security.Signature.getInstance(SIGN_ALGORITHMS);
+            signature.initSign(privateKey);
             signature.update(content.getBytes());
             byte[] signed = signature.sign();
             return Base64.encodeBase64String(signed);
