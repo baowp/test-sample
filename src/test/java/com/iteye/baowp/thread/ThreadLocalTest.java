@@ -25,6 +25,17 @@ public class ThreadLocalTest {
         }
     };
 
+    public static void main(String args[]){
+        BookEntity book = bookLocal.get();
+        book.setTitle("Java");
+        invoke();
+    }
+
+    private static void invoke(){
+        BookEntity book = bookLocal.get();
+        System.out.println(book.getTitle());
+    }
+
     @Test
     public void test() {
         Executor executor = Executors.newFixedThreadPool(5);
