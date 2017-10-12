@@ -14,12 +14,13 @@ public class WaitTest {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private int poolSize = 2;
     private Executor executor = Executors.newFixedThreadPool(poolSize);
+    Thread thread[]=new Thread[poolSize];
 
     @Test
     public void test() {
         Calculator calculator = new Calculator();
-        for (int i = 0; i < poolSize; i++)
-            new Thread(() -> {
+        for (int i = 0; i < poolSize; i++) {
+            thread[i] = new Thread(() -> {
                 synchronized (calculator) {
                     logger.info("1run into synchronized block");
                     try {
@@ -29,11 +30,13 @@ public class WaitTest {
                             logger.info("5Current waiting is finished");
                         }
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        logger.info(e.getMessage(),e);
                     }
                     logger.info("7thread pool finished");
                 }
-            }).start();
+            });
+            thread[i].start();
+        }
         calculator.start();
         sleep2(5000);
         logger.info("application exits");
@@ -51,7 +54,8 @@ public class WaitTest {
             logger.info("1total is {}", total);
             synchronized (this) {
                 logger.info("3begin to notify");
-                notify();
+                //notify();
+                thread[1].interrupt();
                 logger.info("3has notified");
             }
             sleep2(1000);
