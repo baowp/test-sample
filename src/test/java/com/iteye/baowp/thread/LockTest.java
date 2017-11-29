@@ -21,7 +21,7 @@ public class LockTest {
         }).start();
         threadExecute(business, "main");
     }
-    public static void threadExecute(Business business, String threadType) {
+    private void threadExecute(Business business, String threadType) {
         for(int i = 0; i < 100; i++) {
             try {
                 if("main".equals(threadType)) {
