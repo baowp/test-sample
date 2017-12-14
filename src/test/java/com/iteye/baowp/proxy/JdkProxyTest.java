@@ -23,12 +23,9 @@ public class JdkProxyTest {
 
     @Test
     public void testCalculate() {
-        InvocationHandler handler = new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                logger.info("invoked args {}", args);
-                return "hello";
-            }
+        InvocationHandler handler = (Object proxy, Method method, Object[] args) -> {
+            logger.info("invoked method {} args {}", method, args);
+            return "hello";
         };
         Class proxyClass = Proxy.getProxyClass(Calculator.class.getClassLoader(), new Class[]{Calculator.class});
         try {
@@ -48,6 +45,11 @@ public class JdkProxyTest {
 
     @Test
     public void testFirstCalculator() {
+        Calculator calculator = getCalculator();
+        logger.info(calculator.calculate(1));
+    }
+
+    private Calculator getCalculator() {
         class MyInvocationHandler implements InvocationHandler {
             private final Object instance;
 
@@ -61,9 +63,20 @@ public class JdkProxyTest {
             }
         }
 
-        Calculator calculator = (Calculator) Proxy.newProxyInstance(Calculator.class.getClassLoader(),
+        return (Calculator) Proxy.newProxyInstance(Calculator.class.getClassLoader(),
                 new Class[]{Calculator.class},
                 new MyInvocationHandler(new FirstCalculator()));
-        logger.info(calculator.calculate(1));
+    }
+
+    @Test
+    public void testEfficiency() {
+        Calculator calculator = getCalculator();
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < 1000000; i++) {
+            calculator.calculate(i);
+        }
+        long end = System.currentTimeMillis();
+        long span = end - start;
+        logger.info("span time {}", span);
     }
 }

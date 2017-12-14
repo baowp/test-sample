@@ -31,6 +31,18 @@ public class JavassistProxyTest {
     }
 
     @Test
+    public void testEfficiency(){
+        Calculator calculator = create(FirstCalculator.class);
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < 1000000; i++) {
+            calculator.calculate(i);
+        }
+        long end = System.currentTimeMillis();
+        long span = end - start;
+        logger.info("span time {}", span);
+    }
+
+    @Test
     public void testArrayList() {
         List list = create(ArrayList.class);
         list.add("foo");
@@ -44,7 +56,7 @@ public class JavassistProxyTest {
         MethodHandler handler = new MethodHandler() {
             @Override
             public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args) throws Throwable {
-                logger.info("proxy handle {},{}", thisMethod.getName(), proceed.getName());
+                //logger.info("proxy handle {},{}", thisMethod.getName(), proceed.getName());
                 return proceed.invoke(self, args);
             }
         };
